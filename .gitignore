@@ -1,0 +1,26 @@
+# Compilation STM32CubeIDE
+Debug/
+Release/
+*.o
+*.d
+*.su
+*.cyclo
+*.elf
+*.map
+*.list
+*.hex
+
+# Reglages locaux de l'IDE
+.settings/
+*.launch
+
+# Fichiers temporaires Proteus
+*.pdsbak
+*.workspace
+Project Backups/
+*.pdsbad
+
+# Anciennes versions non publiees
+Simulation/Simulation of Command.pdsprj
+Simulation/Static Convertor Simulation.pdsprj
+Docs/schematic.png.png
