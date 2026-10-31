@@ -128,11 +128,14 @@ Simulation model used:
 
 ## Limitations and future work
 
-- Output frequency range is currently **50 to 100 Hz** (target: 1 to 100 Hz)
-- The mode button must be held for DC/AC mode (toggle mode with debounce planned)
-- The H-bridge is simulated with ideal switches; a full simulation with real IGBT models and gate drivers (IR2110) is very slow and unstable in Proteus
-- No closed-loop control yet (open-loop voltage and frequency)
-- Possible improvements: soft-start ramp on amplitude, fault protection with the TIM1 break input, external HSE crystal for better frequency accuracy
+- **Frequency range:** the output frequency is currently 50 to 100 Hz; the target is 1 to 100 Hz.
+- **Ideal switches:** the H-bridge is simulated with ideal switches. A full simulation with real IGBT models and gate drivers (IR2110) is very slow and unstable in Proteus.
+- **Open loop:** there is no closed-loop control yet; output voltage and frequency are set in open loop.
+- **Planned: reversible DC/DC mode.** Drive leg B instead of leg A to get a negative output voltage, so the converter can reverse the polarity of the load (e.g. a DC motor running in both directions).
+- **Other possible improvements:**
+  - a soft-start ramp on the amplitude;
+  - fault protection with the TIM1 break input;
+  - an external HSE crystal for better frequency accuracy.
 
 ## License
 
