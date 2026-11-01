@@ -43,13 +43,13 @@ All captures below come from the Proteus 9 simulation.
 
 ## System overview
 
-```
-230 V AC ──► Rectifier ──► 325 V DC bus ──► H-bridge (4 switches) ──► LC filter ──► Load
-                                                  ▲
-                                                  │ complementary PWM + dead-time
-                                     STM32F401VC (TIM1, ADC1, GPIO)
-                                                  ▲
-                                 Potentiometers (amplitude, frequency) + mode and polarity buttons
+```mermaid
+flowchart LR
+    POT["Potentiometers<br/>amplitude · frequency"] --> MCU
+    BTN["Buttons<br/>mode · polarity"] --> MCU
+    MCU["STM32F401VC<br/>TIM1 · ADC1 · GPIO"] -- "complementary PWM<br/>+ 1 µs dead-time" --> HB
+    DC["325 V DC bus"] --> HB["H-bridge<br/>4 switches"]
+    HB --> LC["LC filter<br/>22 mH · 1 µF"] --> LOAD["Load<br/>100 Ω + 2 mH"]
 ```
 
 ## Pinout
