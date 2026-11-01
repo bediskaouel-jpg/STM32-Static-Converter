@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 
+void Sin_Init(void);
 void DC_AC_Conversion(void);
 void DC_DC_Conversion(void);
 

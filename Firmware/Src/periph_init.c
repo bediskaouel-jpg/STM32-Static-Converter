@@ -85,6 +85,10 @@ static void GPIO_Init(void)
 	WriteRegisterField(&GPIOA->MODER, GPIO_MODER_MODER1_Pos, GPIO_MODER_MODER1_Msk, 3U); // PA1 Analog Mode
 	WriteRegisterField(&GPIOA->MODER, GPIO_MODER_MODER2_Pos, GPIO_MODER_MODER2_Msk, 3U); // PA2 Analog Mode
 
+	/*PC12 Configuration*/
+	WriteRegisterField(&GPIOC->MODER, GPIO_MODER_MODER12_Pos, GPIO_MODER_MODER12_Msk, 0U); // PC12 Input
+	WriteRegisterField(&GPIOC->PUPDR, GPIO_PUPDR_PUPD12_Pos, GPIO_PUPDR_PUPD12_Msk, 2U); // PC12 Pull Down
+
 	/*PC13 Configuration*/
 	WriteRegisterField(&GPIOC->MODER, GPIO_MODER_MODER13_Pos, GPIO_MODER_MODER13_Msk, 0U); // PC13 Input
 	WriteRegisterField(&GPIOC->PUPDR, GPIO_PUPDR_PUPD13_Pos, GPIO_PUPDR_PUPD13_Msk, 2U); // PC13 Pull Down

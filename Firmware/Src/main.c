@@ -13,6 +13,7 @@
  *  - Unipolar sinusoidal PWM (SPWM) for DC/AC mode
  *  - Output amplitude and frequency set by potentiometers (ADC1)
  *  - Operating mode selected by push button (PC13)
+ *  - DC/DC output polarity (positive/negative) selected by button (PC12)
  *  - Bare-metal register programming with CMSIS (no HAL)
  *
  * Target : STM32F401VC @ 84 MHz (HSI + PLL)
@@ -33,7 +34,7 @@ int main(void)
 {
 
 	System_Init();
-
+	Sin_Init();
     /* Loop forever */
 	while(1)
 	{

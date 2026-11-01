@@ -14,6 +14,7 @@
 #define ADC_RANGE 4095U
 #define FREQ_PWM 10000U
 #define COUNTER_MAX_VAL 8400
+#define SIN_TABLE_MAX (FREQ_PWM / MIN_FREQ_VAL)
 
 typedef enum
 {

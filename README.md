@@ -2,7 +2,7 @@
 
 Bare-metal firmware for an **STM32F401VC** that drives an IGBT/MOSFET **H-bridge** in two modes:
 
-- **DC/DC chopper**: adjustable DC output from 0 to ~325 V
+- **DC/DC chopper**: reversible DC output, adjustable from 0 to ±325 V
 - **DC/AC inverter**: adjustable sine output (amplitude up to 325 V peak / 230 V RMS, frequency 50 to 100 Hz) using **unipolar sinusoidal PWM (SPWM)**
 
 The firmware is written in C with **direct register access (CMSIS only, no HAL)**. The whole system was validated in **Proteus 9** simulation, and the complementary PWM outputs with dead-time were verified on a real **STM32F407G-DISC1** board.
@@ -15,9 +15,11 @@ The firmware is written in C with **direct register access (CMSIS only, no HAL)*
 
 - **Complementary PWM** at **10 kHz** on TIM1 (CH1/CH1N and CH2/CH2N) with **1 µs hardware dead-time**
 - **Unipolar SPWM** generated in the TIM1 update interrupt
-- **Sine reference table** recomputed only when the frequency changes, with **phase continuity**
+- **Fixed sine table** (200 points) computed once at startup and resampled in the interrupt: no dynamic memory, instant frequency change with **phase continuity**
+- **Smooth mode transitions**: DC/DC → DC/AC starts the sine at the DC level, and DC/AC → DC/DC waits for the sine to reach the requested DC level
 - **Amplitude and frequency** set by two potentiometers read by ADC1
 - **Operating mode** (DC/DC or DC/AC) selected by a push button
+- **Output polarity** in DC/DC mode (positive or negative) selected by a second button
 - **Clock**: 84 MHz from the internal HSI oscillator and PLL
 
 ## Screenshots
@@ -30,7 +32,7 @@ All captures below come from the Proteus 9 simulation.
 ### DC/AC mode: filtered output voltage (amplitude and frequency changed with the potentiometers)
 ![AC output](Docs/ac_output.png)
 
-### DC/DC mode: adjustable DC output
+### DC/DC mode: reversible DC output (positive and negative levels set with the potentiometer and the polarity button)
 ![DC output](Docs/dc_output.png)
 
 ### Complementary PWM: PA8 (pink) and PA7 (blue)
@@ -47,7 +49,7 @@ All captures below come from the Proteus 9 simulation.
                                                   │ complementary PWM + dead-time
                                      STM32F401VC (TIM1, ADC1, GPIO)
                                                   ▲
-                                 Potentiometers (amplitude, frequency) + mode button
+                                 Potentiometers (amplitude, frequency) + mode and polarity buttons
 ```
 
 ## Pinout
@@ -61,24 +63,34 @@ All captures below come from the Proteus 9 simulation.
 | PA1  | ADC1_IN1             | Amplitude potentiometer                |
 | PA2  | ADC1_IN2             | Frequency potentiometer                |
 | PC13 | GPIO input (pull-down) | Mode button: low = DC/DC, high = DC/AC |
+| PC12 | GPIO input (pull-down) | DC/DC polarity: low = positive, high = negative |
 
 ## How it works
 
 ### DC/DC mode
-Leg A switches with a constant duty cycle `D = Amp / 325`, while the low-side switch of leg B stays on.
-The average output voltage is `V_out = D × V_bus`.
+One leg switches with a constant duty cycle `D = Amp / 325`, while the low-side switch of the other leg stays on.
+The average output voltage is `V_out = ± D × V_bus`:
+- **PC12 low (positive):** leg A switches and leg B is held low.
+- **PC12 high (negative):** leg B switches and leg A is held low, which reverses the polarity across the load.
 
 ### DC/AC mode (unipolar SPWM)
-For a requested frequency `f`, a sine table of `N = 10000 / f` points is computed (one point per PWM period).
-At each TIM1 update interrupt (10 kHz), the next point `s` of the table sets both legs:
+One sine period of 200 points (the number of PWM periods at 50 Hz) is computed once at startup.
+For a requested frequency `f`, one sine period lasts `N = 10000 / f` PWM periods, so the interrupt reads the table at index `k × 200 / N` (k = 0 … N−1).
+At each TIM1 update interrupt (10 kHz), this value `s` sets both legs:
 
 ```
 CCR1 = (ARR + 1) × (1 + m·s) / 2      (leg A)
 CCR2 = (ARR + 1) × (1 − m·s) / 2      (leg B)
 ```
 
-where `m = Amp / 325` is the modulation index. When the frequency changes, the table index is rescaled
-so the sine keeps the same phase.
+where `m = Amp / 325` is the modulation index. When the frequency changes, only `N` and the index are updated
+(the index is rescaled so the sine keeps the same phase); the table itself never changes.
+
+### Mode transitions
+- **DC/DC → DC/AC:** the sine starts at 90° (positive DC) or 270° (negative DC), where its value equals the DC level and its slope is zero.
+- **DC/AC → DC/DC:** the firmware waits for the sine to reach that same point before switching (at most one period).
+
+Both transitions are therefore free of voltage steps.
 
 ### Timing
 | Parameter | Value |
@@ -117,7 +129,7 @@ Simulation/
 
 1. Open `Simulation/Simulation of Load.pdsprj`.
 2. Double-click the STM32 and set **Program File** to the generated `.hex` (or `.elf`).
-3. Run the simulation, then turn the potentiometers and press the mode button.
+3. Run the simulation, then turn the potentiometers and use the mode and polarity buttons.
 
 Simulation model used:
 - 325 V DC bus with 1 Ω series resistance
@@ -131,7 +143,6 @@ Simulation model used:
 - **Frequency range:** the output frequency is currently 50 to 100 Hz; the target is 1 to 100 Hz.
 - **Ideal switches:** the H-bridge is simulated with ideal switches. A full simulation with real IGBT models and gate drivers (IR2110) is very slow and unstable in Proteus.
 - **Open loop:** there is no closed-loop control yet; output voltage and frequency are set in open loop.
-- **Planned: reversible DC/DC mode.** Drive leg B instead of leg A to get a negative output voltage, so the converter can reverse the polarity of the load (e.g. a DC motor running in both directions).
 - **Other possible improvements:**
   - a soft-start ramp on the amplitude;
   - fault protection with the TIM1 break input;
